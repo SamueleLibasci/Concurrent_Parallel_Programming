@@ -2,6 +2,9 @@
 
 public class ThreadExperiments
 {
+    public static int counter = 0;
+    public static readonly object gateLock = new();
+
     public void RunSequential()
     {
         Work("A");
@@ -10,82 +13,96 @@ public class ThreadExperiments
 
     public void RunThreads()
     {
-        // lambda function to assing a certain work to a thread in his constructor
-        Thread thread1 = new(() => Work("A"));
-        Thread thread2 = new(() => Work("B"));
+        // A aspetta 300 ms a ciclo (più veloce), B aspetta 800 ms a ciclo (più lento)
+        Thread thread1 = new Thread(() => Work("A", 300));
+        Thread thread2 = new Thread(() => Work("B", 800));
         Console.WriteLine("Starting threads....");
-        
-        // This is a non-deterministic run
+
         thread1.Start();
         thread2.Start();
-        
-        Console.WriteLine("This line is written by main thread");
 
-        thread1.Join(); // Waiting thread to finish
-        thread2.Join();
+        // Pausa nel thread principale: 1 secondo (1000 ms)
+        Thread.Sleep(1000);
+        Console.WriteLine(">>> [Main] Sono passato dopo 1s: A e B stanno ancora lavorando!");
 
-        // This is a deterministic run, due to the threads waiting (carried out by join)
+        thread1.Join(); // Il Main aspetta la fine di A
+        Console.WriteLine(">>> [Main] A ha finito! Ora aspetto che finisca B...");
+
+        thread2.Join(); // Il Main aspetta la fine di B (il più lento)
         Console.WriteLine("All finished");
     }
 
     public void ShowThreadProperties()
     {
-        Thread thread = Thread.CurrentThread;
-        Console.WriteLine($"Thread ID: {thread.ManagedThreadId}");
-        Console.WriteLine($"Thread Name: {thread.Name}");
-        Console.WriteLine($"Thread Priority: {thread.Priority}");
-        Console.WriteLine($"Is Background Thread: {thread.IsBackground}");
+        Thread currentThread = Thread.CurrentThread;
+        Console.WriteLine($"Thread ID: {currentThread.ManagedThreadId}");
+        Console.WriteLine($"Thread Name: {currentThread.Name}");
+        Console.WriteLine($"Is Background: {currentThread.IsBackground}");
+        Console.WriteLine($"Is Alive: {currentThread.IsAlive}");
+        Console.WriteLine($"Priority: {currentThread.Priority}");
+        Console.WriteLine($"Is a Thread pool Thread: {currentThread.IsThreadPoolThread}");
     }
 
-    // Avere una risorsa condivisa su cui più thread devono agire. può essere pericoloso
-    // in quanto potrebbero esserci problemi sull'aggiornamento della variabile condivisa
-    // 1° test: i thread contano sulla stessa variabile condivisa senza sincronizzazione
-    // 2° test: i thread contano sulla stessa variabile condivisa con sincronizzazione
-    // il metodo ritorna una tupla (Expected, Actual)
-    public (int Expected, int Actual) RunCounter(bool useLock, int iterations=100_000)
+    private static void Increment(int iterations, bool useLock)
     {
-        int counter = 0;
-        object gateLock = new();
-
-        // functions used by our threads
-        void Increment()
+        for (int i = 0; i < iterations; i++)
         {
-            for (int i = 0; i <= iterations; i++)
+            if (useLock)
             {
-                // mi serve un acesso in mutua esclusione per ottenere una soluzione deterministica 
-                if (useLock)
+                lock (gateLock)
                 {
-                    lock (gateLock)
-                    {
-                        counter += 1;
-                    }
-                }
-                else
-                {
-                    counter+= 1;
+                    counter++;
                 }
             }
+            else
+            {
+                counter++;
+            }
         }
-
-        Thread thread1 = new(Increment);
-        Thread thread2 = new(Increment);
-
-        thread1.Start();
-        thread2.Start();
-        
-        thread1.Join();
-        thread2.Join();
-
-        return (iterations*2, counter);
     }
 
-    // Funzione per simulare del lavor
-    private static void Work(string name)
+    // 1° Test: i thread contano sulla stessa variabile condivisa senza sincronizzazione
+    // 2° Test: i thread contano sulla stessa variabile condivisa con sincronizzazione
+    public (int Expected, int Actual) RunCounter(bool useLock, int iterations = 100_000)
     {
-        for(int i=0; i<= 5; i++)
+        counter = 0;
+
+        Thread t1 = new(() => Increment(iterations, useLock));
+        Thread t2 = new(() => Increment(iterations, useLock));
+
+        t1.Start();
+        t2.Start();
+
+        t1.Join();
+        t2.Join();
+
+        return (Expected: iterations * 2, Actual: counter);
+    }
+
+    // Avvia un thread di background senza Join
+    public void RunBackgroundWorker()
+    {
+        Thread worker = new Thread(() =>
         {
-            Console.WriteLine($"{name}; Thread: {Thread.CurrentThread.ManagedThreadId}; index {i}");
-            Thread.Sleep(100);
+            Console.WriteLine("\n[Background Worker] Avviato! Attendo 5 secondi...");
+            Thread.Sleep(TimeSpan.FromSeconds(5));
+            Console.WriteLine("\n[Background Worker] Finito! (Se hai premuto subito 0, non mi vedrai mai)");
+        });
+
+        worker.IsBackground = true;
+        worker.Start();
+
+        Console.WriteLine("[Main] Worker avviato senza Join. Premi INVIO per tornare al menu e scegli subito 0.");
+    }
+
+    // Funzione per simulare il lavoro con durata configurabile
+    private void Work(string name, int delayMs = 100)
+    {
+        for (int i = 0; i <= 5; i++)
+        {
+            Console.WriteLine($"{name}: Thread: {Thread.CurrentThread.ManagedThreadId}; index {i}");
+            Thread.Sleep(delayMs);
         }
     }
 }
+
