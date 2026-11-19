@@ -1,4 +1,5 @@
-﻿
+﻿/*
+using SynchronizationDemo.Domain;
 
 var semaforo = new SemaphoreExperiment();
 
@@ -34,4 +35,4 @@ while (!termina)
     }
 }
 
-Console.WriteLine("SynchronizationDemo terminato.");
+Console.WriteLine("SynchronizationDemo terminato."); */

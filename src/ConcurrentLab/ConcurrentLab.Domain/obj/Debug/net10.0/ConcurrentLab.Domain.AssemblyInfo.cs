@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ConcurrentLab.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+064ccc186b04d2ad9188219365e395580fb6c23a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4567cc3a1ca83548430254a6242189426e23c3f4")]
 [assembly: System.Reflection.AssemblyProductAttribute("ConcurrentLab.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ConcurrentLab.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

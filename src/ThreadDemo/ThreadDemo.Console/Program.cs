@@ -1,57 +1,54 @@
-﻿using System.Diagnostics;
-using ThreadDemo.Domain;
+﻿using ThreadDemo.Domain;
 
 var experiments = new ThreadExperiments();
 
 while (true)
 {
-    Console.Clear();
-    Console.WriteLine("=== THREAD DEMO ===");
+    Console.WriteLine();
+    Console.WriteLine("THREAD DEMO");
     Console.WriteLine("1. Esecuzione sequenziale");
-    Console.WriteLine("2. Due thread concorrenti (con pause diverse)");
+    Console.WriteLine("2. Due thread concorrenti");
     Console.WriteLine("3. Proprietà del thread corrente");
     Console.WriteLine("4. Contatore senza lock");
     Console.WriteLine("5. Contatore con lock");
-    Console.WriteLine("6. Background worker senza Join");
+    Console.WriteLine("6. Thread in background");
+    Console.WriteLine("7. Thread in foreground");
     Console.WriteLine("0. Esci");
-    Console.Write("\nScelta: ");
+    Console.Write("Scelta: ");
 
-    string? choice = Console.ReadLine()?.Trim();
+    string? choice = Console.ReadLine();
 
     switch (choice)
     {
         case "1":
             experiments.RunSequential();
-            break;
-
+        break;
+        
         case "2":
-            experiments.RunThreads();
-            break;
+        experiments.RunThreads();
+        break;
 
         case "3":
-            experiments.ShowThreadProperties();
-            break;
-
-        case "4":
-        case "5":
-            bool useLock = choice == "5";
-            var sw = Stopwatch.StartNew();
-            var result = experiments.RunCounter(useLock);
-            sw.Stop();
-
-            Console.WriteLine($"\nModalità: {(useLock ? "CON lock" : "SENZA lock")}");
-            Console.WriteLine($"Atteso:   {result.Expected:N0}");
-            Console.WriteLine($"Ottenuto: {result.Actual:N0}");
-            Console.WriteLine($"Persi:    {result.Expected - result.Actual:N0}");
-            Console.WriteLine($"Tempo:    {sw.ElapsedMilliseconds} ms");
-            break;
+        experiments.ShowThreadProperties();
+        break;
 
         case "6":
-            experiments.RunBackgroundWorker();
+            experiments.RunBackgroundThreadExperiment();
             break;
 
+        case "7":
+            experiments.RunForegroundThreadExperiment();
+            break;
+
+         case "4":
+         case "5":
+            var result = experiments.RunCounter(useLock: choice == "5");
+
+             Console.WriteLine($"Atteso: {result.Expected}");
+             Console.WriteLine($"Ottenuto: {result.Actual}");
+             break;
+
         case "0":
-        case null:
             return;
 
         default:
@@ -59,6 +56,6 @@ while (true)
             break;
     }
 
-    Console.WriteLine("\nPremi INVIO per continuare...");
+    Console.WriteLine("Premi INVIO per continuare...");
     Console.ReadLine();
 }
